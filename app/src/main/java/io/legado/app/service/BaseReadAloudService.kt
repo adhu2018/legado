@@ -497,6 +497,7 @@ abstract class BaseReadAloudService : BaseService(),
         val builder = NotificationCompat
             .Builder(this@BaseReadAloudService, AppConst.channelIdReadAloud)
             .setSmallIcon(R.drawable.ic_volume_up)
+            .setLargeIcon(cover)
             .setSubText(getString(R.string.read_aloud))
             .setOngoing(true)
             .setContentTitle(nTitle)
@@ -507,7 +508,7 @@ abstract class BaseReadAloudService : BaseService(),
             .setVibrate(null)
             .setSound(null)
             .setLights(0, 0, 0)
-        builder.setLargeIcon(cover)
+            .setStyle(androidx.media.app.NotificationCompat.MediaStyle())
         if (pause) {
             builder.addAction(
                 R.drawable.ic_play_24dp,
