@@ -508,7 +508,6 @@ abstract class BaseReadAloudService : BaseService(),
             .setVibrate(null)
             .setSound(null)
             .setLights(0, 0, 0)
-            .setStyle(androidx.media.app.NotificationCompat.MediaStyle())
         if (pause) {
             builder.addAction(
                 R.drawable.ic_play_24dp,
@@ -535,6 +534,7 @@ abstract class BaseReadAloudService : BaseService(),
         builder.setStyle(
             androidx.media.app.NotificationCompat.MediaStyle()
                 .setShowActionsInCompactView(0, 1, 2)
+                .setMediaSession(mediaSessionCompat.sessionToken)
         )
         return builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
     }
