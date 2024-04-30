@@ -508,6 +508,12 @@ abstract class BaseReadAloudService : BaseService(),
             .setVibrate(null)
             .setSound(null)
             .setLights(0, 0, 0)
+
+        builder.addAction(
+            R.drawable.ic_skip_previous,
+            getString(R.string.skip_previous),
+            aloudServicePendingIntent(IntentAction.prevParagraph)
+        )
         if (pause) {
             builder.addAction(
                 R.drawable.ic_play_24dp,
@@ -522,6 +528,12 @@ abstract class BaseReadAloudService : BaseService(),
             )
         }
         builder.addAction(
+            R.drawable.ic_skip_next,
+            getString(R.string.skip_next),
+            aloudServicePendingIntent(IntentAction.nextParagraph)
+        )
+        /*
+        builder.addAction(
             R.drawable.ic_stop_black_24dp,
             getString(R.string.stop),
             aloudServicePendingIntent(IntentAction.stop)
@@ -531,6 +543,7 @@ abstract class BaseReadAloudService : BaseService(),
             getString(R.string.set_timer),
             aloudServicePendingIntent(IntentAction.addTimer)
         )
+        */
         builder.setStyle(
             androidx.media.app.NotificationCompat.MediaStyle()
                 .setShowActionsInCompactView(0, 1, 2)
