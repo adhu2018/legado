@@ -182,7 +182,7 @@ data class BookSource(
 
     fun hasGroup(group: String): Boolean {
         bookSourceGroup?.splitNotBlank(AppPattern.splitGroupRegex)?.toHashSet()?.let {
-            return it.indexOf(group) != -1
+            return it.indexOf(group.trim()) != -1
         }
         return false
     }

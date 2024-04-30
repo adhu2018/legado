@@ -532,7 +532,7 @@ class BookSourceActivity : VMBaseActivity<ActivityBookSourceBinding, BookSourceV
     private fun upGroupMenu() = groupMenu?.let { menu ->
         menu.removeGroup(R.id.source_group)
         groups.forEach {
-            menu.add(R.id.source_group, Menu.NONE, Menu.NONE, it)
+            menu.add(R.id.source_group, Menu.NONE, Menu.NONE, it.trim())
         }
     }
 

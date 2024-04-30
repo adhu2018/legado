@@ -2,8 +2,10 @@ package io.legado.app.ui.book.source.edit
 
 import android.app.Application
 import android.content.Intent
+import android.text.TextUtils
 import io.legado.app.R
 import io.legado.app.base.BaseViewModel
+import io.legado.app.constant.AppPattern.splitGroupRegex
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.BookSource
 import io.legado.app.exception.NoStackTraceException
@@ -40,6 +42,13 @@ class BookSourceEditViewModel(application: Application) : BaseViewModel(applicat
         execute {
             if (source.bookSourceUrl.isBlank() || source.bookSourceName.isBlank()) {
                 throw NoStackTraceException(context.getString(R.string.non_null_name_url))
+            }
+            if (!source.bookSourceGroup.isNullOrEmpty()) {
+                source.bookSourceGroup = source.bookSourceGroup!!
+                    .splitNotBlank(splitGroupRegex).toHashSet()
+                    .let{
+                        TextUtils.join(",", it)
+                    }
             }
             if (!source.equal(bookSource ?: BookSource())) {
                 source.lastUpdateTime = System.currentTimeMillis()

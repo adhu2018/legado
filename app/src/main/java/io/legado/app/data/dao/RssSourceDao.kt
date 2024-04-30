@@ -127,7 +127,7 @@ interface RssSourceDao {
         val groups = linkedSetOf<String>()
         list.forEach {
             it.splitNotBlank(AppPattern.splitGroupRegex).forEach { group ->
-                groups.add(group)
+                groups.add(group.trim())
             }
         }
         return groups.sortedWith { o1, o2 ->

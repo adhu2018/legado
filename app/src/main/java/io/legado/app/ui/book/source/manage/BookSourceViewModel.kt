@@ -4,6 +4,7 @@ import android.app.Application
 import android.text.TextUtils
 import io.legado.app.R
 import io.legado.app.base.BaseViewModel
+import io.legado.app.constant.AppPattern.splitGroupRegex
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.BookSource
 import io.legado.app.data.entities.BookSourcePart
@@ -203,11 +204,11 @@ class BookSourceViewModel(application: Application) : BaseViewModel(application)
 
             searchKey.startsWith("group:") -> {
                 val key = searchKey.substringAfter("group:")
-                appDb.bookSourceDao.groupSearch(key)
+                appDb.bookSourceDao.groupSearch(key.trim())
             }
 
             else -> {
-                appDb.bookSourceDao.search(searchKey)
+                appDb.bookSourceDao.search(searchKey.trim())
             }
         }.let { data ->
             if (sortAscending) when (sort) {
@@ -255,7 +256,7 @@ class BookSourceViewModel(application: Application) : BaseViewModel(application)
         execute {
             val sources = appDb.bookSourceDao.noGroup
             sources.map { source ->
-                source.bookSourceGroup = group
+                source.bookSourceGroup = group.trim()
             }
             appDb.bookSourceDao.update(*sources.toTypedArray())
         }
@@ -265,10 +266,10 @@ class BookSourceViewModel(application: Application) : BaseViewModel(application)
         execute {
             val sources = appDb.bookSourceDao.getByGroup(oldGroup)
             sources.map { source ->
-                source.bookSourceGroup?.splitNotBlank(",")?.toHashSet()?.let {
+                source.bookSourceGroup?.splitNotBlank(splitGroupRegex)?.toHashSet()?.let {
                     it.remove(oldGroup)
                     if (!newGroup.isNullOrEmpty())
-                        it.add(newGroup)
+                        it.add(newGroup.trim())
                     source.bookSourceGroup = TextUtils.join(",", it)
                 }
             }

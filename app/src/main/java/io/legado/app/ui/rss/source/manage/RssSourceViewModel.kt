@@ -3,6 +3,7 @@ package io.legado.app.ui.rss.source.manage
 import android.app.Application
 import android.text.TextUtils
 import io.legado.app.base.BaseViewModel
+import io.legado.app.constant.AppPattern.splitGroupRegex
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.RssSource
 import io.legado.app.help.DefaultData
@@ -109,7 +110,7 @@ class RssSourceViewModel(application: Application) : BaseViewModel(application) 
         execute {
             val sources = appDb.rssSourceDao.noGroup
             sources.map { source ->
-                source.sourceGroup = group
+                source.sourceGroup = group.trim()
             }
             appDb.rssSourceDao.update(*sources.toTypedArray())
         }
@@ -119,10 +120,10 @@ class RssSourceViewModel(application: Application) : BaseViewModel(application) 
         execute {
             val sources = appDb.rssSourceDao.getByGroup(oldGroup)
             sources.map { source ->
-                source.sourceGroup?.splitNotBlank(",")?.toHashSet()?.let {
+                source.sourceGroup?.splitNotBlank(splitGroupRegex)?.toHashSet()?.let {
                     it.remove(oldGroup)
                     if (!newGroup.isNullOrEmpty())
-                        it.add(newGroup)
+                        it.add(newGroup.trim())
                     source.sourceGroup = TextUtils.join(",", it)
                 }
             }
@@ -135,7 +136,7 @@ class RssSourceViewModel(application: Application) : BaseViewModel(application) 
             execute {
                 val sources = appDb.rssSourceDao.getByGroup(group)
                 sources.map { source ->
-                    source.sourceGroup?.splitNotBlank(",")?.toHashSet()?.let {
+                    source.sourceGroup?.splitNotBlank(splitGroupRegex)?.toHashSet()?.let {
                         it.remove(group)
                         source.sourceGroup = TextUtils.join(",", it)
                     }

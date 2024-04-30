@@ -341,7 +341,7 @@ interface BookSourceDao {
     @Transaction
     fun upGroup(bookSources: List<BookSourcePart>) {
         for (bs in bookSources) {
-            bs.bookSourceGroup?.let { upGroup(bs.bookSourceUrl, it) }
+            bs.bookSourceGroup?.let { upGroup(bs.bookSourceUrl, it.trim()) }
         }
     }
 
