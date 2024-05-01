@@ -575,7 +575,7 @@ object ReadBook : CoroutineScope by MainScope() {
                     prevTextChapter?.cancelLayout()
                     prevTextChapter = textChapter
                     textChapter.layoutChannel.receiveAsFlow().collect()
-                    if (upContent) callBack?.upContent(offset, resetPageOffset)
+                    if (upContent) callBack?.upContent(offset, resetPageOffset) else TODO()
                 }
 
                 1 -> {
@@ -588,6 +588,8 @@ object ReadBook : CoroutineScope by MainScope() {
                         if (upContent) callBack?.upContent(offset, resetPageOffset)
                     }
                 }
+
+                else -> {}
             }
         }.onError {
             AppLog.put("ChapterProvider ERROR", it)

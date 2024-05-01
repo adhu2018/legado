@@ -413,11 +413,16 @@ abstract class BaseReadAloudService : BaseService(),
      */
     @SuppressLint("UnspecifiedImmutableFlag")
     private fun initMediaSession() {
-        mediaSessionCompat.setCallback(object : MediaSessionCompat.Callback() {
-            override fun onMediaButtonEvent(mediaButtonEvent: Intent): Boolean {
-                return MediaButtonReceiver.handleIntent(this@BaseReadAloudService, mediaButtonEvent)
-            }
-        })
+        mediaSessionCompat.setCallback(
+            object : MediaSessionCompat.Callback() {
+                override fun onMediaButtonEvent(mediaButtonEvent: Intent): Boolean {
+                    return MediaButtonReceiver.handleIntent(
+                        this@BaseReadAloudService,
+                        mediaButtonEvent,
+                    )
+                }
+            },
+        )
         mediaSessionCompat.setMediaButtonReceiver(
             broadcastPendingIntent<MediaButtonReceiver>(Intent.ACTION_MEDIA_BUTTON)
         )
@@ -513,7 +518,7 @@ abstract class BaseReadAloudService : BaseService(),
         builder.addAction(
             R.drawable.ic_skip_previous,
             getString(R.string.skip_previous),
-            aloudServicePendingIntent(IntentAction.prevParagraph)
+            aloudServicePendingIntent(IntentAction.prev)
         )
         if (pause) {
             builder.addAction(
@@ -531,7 +536,7 @@ abstract class BaseReadAloudService : BaseService(),
         builder.addAction(
             R.drawable.ic_skip_next,
             getString(R.string.skip_next),
-            aloudServicePendingIntent(IntentAction.nextParagraph)
+            aloudServicePendingIntent(IntentAction.next)
         )
         builder.addAction(
             R.drawable.ic_stop_black_24dp,

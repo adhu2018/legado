@@ -643,7 +643,7 @@ class AudioPlayService : BaseService(),
             .setContentIntent(
                 activityPendingIntent<AudioPlayActivity>("activity")
             )
-        builder.setLargeIcon(cover)
+            .setLargeIcon(cover)
         if (pause) {
             builder.addAction(
                 R.drawable.ic_play_24dp,
@@ -667,11 +667,20 @@ class AudioPlayService : BaseService(),
             getString(R.string.set_timer),
             servicePendingIntent<AudioPlayService>(IntentAction.addTimer)
         )
-        builder.setStyle(
-            androidx.media.app.NotificationCompat.MediaStyle()
-                .setShowActionsInCompactView(0, 1, 2)
-                .setMediaSession(mediaSessionCompat?.sessionToken)
-        )
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder.setStyle(
+                androidx.media.app.NotificationCompat.MediaStyle()
+                    .setShowActionsInCompactView(0, 1, 2)
+                    .setMediaSession(mediaSessionCompat?.sessionToken)
+            )
+        }
+        else {
+            builder.setStyle(
+                androidx.media.app.NotificationCompat.MediaStyle()
+                    .setShowActionsInCompactView(0, 1, 2)
+            )
+        }
         builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
         return builder
     }
