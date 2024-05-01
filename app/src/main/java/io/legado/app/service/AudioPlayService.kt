@@ -37,6 +37,7 @@ import io.legado.app.help.config.AppConfig
 import io.legado.app.help.exoplayer.ExoPlayerHelper
 import io.legado.app.help.glide.ImageLoader
 import io.legado.app.model.AudioPlay
+import io.legado.app.model.ReadBook
 import io.legado.app.model.analyzeRule.AnalyzeUrl
 import io.legado.app.model.webBook.WebBook
 import io.legado.app.receiver.MediaButtonReceiver
@@ -170,6 +171,7 @@ class AudioPlayService : BaseService(),
                 }
 
                 IntentAction.stop -> stopSelf()
+                else -> {}
             }
         }
         return super.onStartCommand(intent, flags, startId)
@@ -528,6 +530,24 @@ class AudioPlayService : BaseService(),
             override fun onPlay() = resume()
 
             override fun onPause() = pause()
+
+            override fun onStop() = stopSelf()
+
+            override fun onSkipToNext() {
+                ReadBook.upReadTime()
+                AppLog.putDebug("${ReadBook.curTextChapter?.chapter?.title} 朗读结束跳转下一章并朗读")
+                if (!ReadBook.moveToNextChapter(true)) {
+                    stopSelf()
+                }
+            }
+
+            override fun onSkipToPrevious() {
+                ReadBook.upReadTime()
+                if (!ReadBook.moveToPrevChapter(false)) {
+                    stopSelf()
+                }
+            }
+
 
             override fun onCustomAction(action: String?, extras: Bundle?) {
                 action ?: return

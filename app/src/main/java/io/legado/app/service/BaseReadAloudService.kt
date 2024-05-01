@@ -10,6 +10,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.AudioManager
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.support.v4.media.session.MediaSessionCompat
@@ -532,7 +533,6 @@ abstract class BaseReadAloudService : BaseService(),
             getString(R.string.skip_next),
             aloudServicePendingIntent(IntentAction.nextParagraph)
         )
-        /*
         builder.addAction(
             R.drawable.ic_stop_black_24dp,
             getString(R.string.stop),
@@ -543,12 +543,19 @@ abstract class BaseReadAloudService : BaseService(),
             getString(R.string.set_timer),
             aloudServicePendingIntent(IntentAction.addTimer)
         )
-        */
-        builder.setStyle(
-            androidx.media.app.NotificationCompat.MediaStyle()
-                .setShowActionsInCompactView(0, 1, 2)
-                .setMediaSession(mediaSessionCompat.sessionToken)
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder.setStyle(
+                androidx.media.app.NotificationCompat.MediaStyle()
+                    .setShowActionsInCompactView(0, 1, 2)
+                    .setMediaSession(mediaSessionCompat.sessionToken)
+            )
+        }
+        else {
+            builder.setStyle(
+                androidx.media.app.NotificationCompat.MediaStyle()
+                    .setShowActionsInCompactView(0, 1, 2)
+            )
+        }
         return builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
     }
 
