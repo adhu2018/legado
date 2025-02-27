@@ -11,9 +11,11 @@ import io.legado.app.data.entities.BookSource
 import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.book.BookHelp
 import io.legado.app.help.book.isEpub
+import io.legado.app.help.book.isMobi
 import io.legado.app.help.book.isPdf
 import io.legado.app.help.config.AppConfig
 import io.legado.app.model.localBook.EpubFile
+import io.legado.app.model.localBook.MobiFile
 import io.legado.app.model.localBook.PdfFile
 import io.legado.app.utils.BitmapUtils
 import io.legado.app.utils.FileUtils
@@ -24,6 +26,7 @@ import kotlinx.coroutines.withContext
 import splitties.init.appCtx
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.math.min
 
 object ImageProvider {
 
@@ -38,12 +41,19 @@ object ImageProvider {
     private const val M = 1024 * 1024
     val cacheSize: Int
         get() {
-            if (AppConfig.bitmapCacheSize <= 0) {
+            if (AppConfig.bitmapCacheSize <= 0 || AppConfig.bitmapCacheSize >= 2048) {
                 AppConfig.bitmapCacheSize = 50
             }
             return AppConfig.bitmapCacheSize * M
         }
-    val bitmapLruCache = object : LruCache<String, Bitmap>(cacheSize) {
+
+    val bitmapLruCache = BitmapLruCache()
+
+    class BitmapLruCache : LruCache<String, Bitmap>(cacheSize) {
+
+        private var removeCount = 0
+
+        val count get() = putCount() + createCount() - evictionCount() - removeCount
 
         override fun sizeOf(filePath: String, bitmap: Bitmap): Int {
             return bitmap.byteCount
@@ -55,6 +65,11 @@ object ImageProvider {
             oldBitmap: Bitmap,
             newBitmap: Bitmap?
         ) {
+            if (!evicted) {
+                synchronized(this) {
+                    removeCount++
+                }
+            }
             //错误图片不能释放,占位用,防止一直重复获取图片
             if (oldBitmap != errorBitmap) {
                 oldBitmap.recycle()
@@ -66,11 +81,16 @@ object ImageProvider {
     }
 
     fun put(key: String, bitmap: Bitmap) {
+        ensureLruCacheSize(bitmap)
         bitmapLruCache.put(key, bitmap)
     }
 
     fun get(key: String): Bitmap? {
         return bitmapLruCache.get(key)
+    }
+
+    fun remove(key: String): Bitmap? {
+        return bitmapLruCache.remove(key)
     }
 
     private fun getNotRecycled(key: String): Bitmap? {
@@ -80,6 +100,22 @@ object ImageProvider {
             return null
         }
         return bitmap
+    }
+
+    private fun ensureLruCacheSize(bitmap: Bitmap) {
+        val lruMaxSize = bitmapLruCache.maxSize()
+        val lruSize = bitmapLruCache.size()
+        val byteCount = bitmap.byteCount
+        val size = if (byteCount > lruMaxSize) {
+            min(256 * M, (byteCount * 1.3).toInt())
+        } else if (lruSize + byteCount > lruMaxSize && bitmapLruCache.count < 5) {
+            min(256 * M, (lruSize + byteCount * 1.3).toInt())
+        } else {
+            lruMaxSize
+        }
+        if (size > lruMaxSize) {
+            bitmapLruCache.resize(size)
+        }
     }
 
     /**
@@ -92,23 +128,21 @@ object ImageProvider {
     ): File {
         return withContext(IO) {
             val vFile = BookHelp.getImage(book, src)
-            if (!vFile.exists()) {
-                if (book.isEpub) {
-                    EpubFile.getImage(book, src)?.use { input ->
-                        val newFile = FileUtils.createFileIfNotExist(vFile.absolutePath)
-                        FileOutputStream(newFile).use { output ->
-                            input.copyTo(output)
-                        }
+            if (!BookHelp.isImageExist(book, src)) {
+                val inputStream = when {
+                    book.isEpub -> EpubFile.getImage(book, src)
+                    book.isPdf -> PdfFile.getImage(book, src)
+                    book.isMobi -> MobiFile.getImage(book, src)
+                    else -> {
+                        BookHelp.saveImage(bookSource, book, src)
+                        null
                     }
-                } else if (book.isPdf) {
-                    PdfFile.getImage(book, src)?.use { input ->
-                        val newFile = FileUtils.createFileIfNotExist(vFile.absolutePath)
-                        FileOutputStream(newFile).use { output ->
-                            input.copyTo(output)
-                        }
+                }
+                inputStream?.use { input ->
+                    val newFile = FileUtils.createFileIfNotExist(vFile.absolutePath)
+                    FileOutputStream(newFile).use { output ->
+                        input.copyTo(output)
                     }
-                } else {
-                    BookHelp.saveImage(bookSource, book, src)
                 }
             }
             return@withContext vFile
@@ -163,11 +197,11 @@ object ImageProvider {
             val bitmap = BitmapUtils.decodeBitmap(vFile.absolutePath, width, height)
                 ?: SvgUtils.createBitmap(vFile.absolutePath, width, height)
                 ?: throw NoStackTraceException(appCtx.getString(R.string.error_decode_bitmap))
-            bitmapLruCache.put(vFile.absolutePath, bitmap)
+            put(vFile.absolutePath, bitmap)
             bitmap
         }.onFailure {
             //错误图片占位,防止重复获取
-            bitmapLruCache.put(vFile.absolutePath, errorBitmap)
+            put(vFile.absolutePath, errorBitmap)
         }.getOrDefault(errorBitmap)
     }
 

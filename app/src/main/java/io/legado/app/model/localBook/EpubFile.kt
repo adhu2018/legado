@@ -10,6 +10,7 @@ import io.legado.app.data.entities.BookChapter
 import io.legado.app.help.book.BookHelp
 import io.legado.app.utils.FileUtils
 import io.legado.app.utils.HtmlFormatter
+import io.legado.app.utils.encodeURI
 import io.legado.app.utils.isXml
 import io.legado.app.utils.printOnDebug
 import me.ag2s.epublib.domain.EpubBook
@@ -19,6 +20,7 @@ import me.ag2s.epublib.epub.EpubReader
 import me.ag2s.epublib.util.zip.AndroidZipFile
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import org.jsoup.parser.Parser
 import org.jsoup.select.Elements
 import java.io.File
 import java.io.FileOutputStream
@@ -95,26 +97,7 @@ class EpubFile(var book: Book) {
         }
 
     init {
-        try {
-            epubBook?.let {
-                if (book.coverUrl.isNullOrEmpty()) {
-                    book.coverUrl = LocalBook.getCoverPath(book)
-                }
-                if (!File(book.coverUrl!!).exists()) {
-                    /*部分书籍DRM处理后，封面获取异常，待优化*/
-                    it.coverImage?.inputStream?.use { input ->
-                        val cover = BitmapFactory.decodeStream(input)
-                        val out = FileOutputStream(FileUtils.createFileIfNotExist(book.coverUrl!!))
-                        cover.compress(Bitmap.CompressFormat.JPEG, 90, out)
-                        out.flush()
-                        out.close()
-                    } ?: AppLog.putDebug("Epub: 封面获取为空. path: ${book.bookUrl}")
-                }
-            }
-        } catch (e: Exception) {
-            AppLog.put("加载书籍封面失败\n${e.localizedMessage}", e)
-            e.printOnDebug()
-        }
+        upBookCover(true)
     }
 
     /**
@@ -176,8 +159,17 @@ class EpubFile(var book: Book) {
         }
         //title标签中的内容不需要显示在正文中，去除
         elements.select("title").remove()
+        elements.select("[style*=display:none]").remove()
         elements.select("img[src=\"cover.jpeg\"]").forEachIndexed { i, it ->
             if (i > 0) it.remove()
+        }
+        elements.select("img").forEach {
+            if (it.attributesSize() <= 1) {
+                return@forEach
+            }
+            val src = it.attr("src")
+            it.clearAttributes()
+            it.attr("src", src)
         }
         val tag = Book.rubyTag
         if (book.getDelTag(tag)) {
@@ -243,9 +235,15 @@ class EpubFile(var book: Book) {
                 //getElementsMatchingOwnText(chapter.title)?.remove()
             }
         }
+        bodyElement.select("image").forEach {
+            it.tagName("img", Parser.NamespaceHtml)
+            it.attr("src", it.attr("xlink:href"))
+        }
         bodyElement.select("img").forEach {
-            val src = it.attr("src")
-            it.attr("src", URI(res.href).resolve(src).toString())
+            val src = it.attr("src").trim().encodeURI()
+            val href = res.href.encodeURI()
+            val resolvedHref = URLDecoder.decode(URI(href).resolve(src).toString(), "UTF-8")
+            it.attr("src", resolvedHref)
         }
         return bodyElement
     }
@@ -256,11 +254,36 @@ class EpubFile(var book: Book) {
         return epubBook?.resources?.getByHref(abHref)?.inputStream
     }
 
+    private fun upBookCover(fastCheck: Boolean = false) {
+        try {
+            epubBook?.let {
+                if (book.coverUrl.isNullOrEmpty()) {
+                    book.coverUrl = LocalBook.getCoverPath(book)
+                }
+                if (fastCheck && File(book.coverUrl!!).exists()) {
+                    return
+                }
+                /*部分书籍DRM处理后，封面获取异常，待优化*/
+                it.coverImage?.inputStream?.use { input ->
+                    val cover = BitmapFactory.decodeStream(input)
+                    val out = FileOutputStream(FileUtils.createFileIfNotExist(book.coverUrl!!))
+                    cover.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                    out.flush()
+                    out.close()
+                } ?: AppLog.putDebug("Epub: 封面获取为空. path: ${book.bookUrl}")
+            }
+        } catch (e: Exception) {
+            AppLog.put("加载书籍封面失败\n${e.localizedMessage}", e)
+            e.printOnDebug()
+        }
+    }
+
     private fun upBookInfo() {
         if (epubBook == null) {
             eFile = null
             book.intro = "书籍导入异常"
         } else {
+            upBookCover()
             val metadata = epubBook!!.metadata
             book.name = metadata.firstTitle
             if (book.name.isEmpty()) {

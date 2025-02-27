@@ -3,7 +3,10 @@ package io.legado.app.help.http
 import io.legado.app.constant.AppConst
 import io.legado.app.help.CacheManager
 import io.legado.app.help.config.AppConfig
+import io.legado.app.help.glide.progress.ProgressManager.LISTENER
+import io.legado.app.help.glide.progress.ProgressResponseBody
 import io.legado.app.help.http.CookieManager.cookieJarHeader
+import io.legado.app.model.ReadManga
 import io.legado.app.utils.NetworkUtils
 import okhttp3.ConnectionSpec
 import okhttp3.Cookie
@@ -12,17 +15,12 @@ import okhttp3.Credentials
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
-import okhttp3.internal.http.RealResponseBody
-import okhttp3.internal.http.promisesBody
-import okio.buffer
-import okio.source
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import java.util.zip.GZIPInputStream
 
 private val proxyClientCache: ConcurrentHashMap<String, OkHttpClient> by lazy {
     ConcurrentHashMap()
@@ -60,7 +58,7 @@ val okHttpClient: OkHttpClient by lazy {
     val builder = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
         .callTimeout(60, TimeUnit.SECONDS)
         //.cookieJar(cookieJar = cookieJar)
         .sslSocketFactory(SSLHelper.unsafeSSLSocketFactory, SSLHelper.unsafeTrustManager)
@@ -107,38 +105,7 @@ val okHttpClient: OkHttpClient by lazy {
             }
         }
     }
-    builder.addInterceptor { chain ->
-        val request = chain.request()
-        val requestBuilder = request.newBuilder()
-
-        var transparentGzip = false
-        if (request.header("Accept-Encoding") == null && request.header("Range") == null) {
-            transparentGzip = true
-            requestBuilder.header("Accept-Encoding", "gzip")
-        }
-
-        val response = chain.proceed(requestBuilder.build())
-
-        val responseBody = response.body
-        if (transparentGzip && "gzip".equals(response.header("Content-Encoding"), ignoreCase = true)
-            && response.promisesBody() && responseBody != null
-        ) {
-            val responseBuilder = response.newBuilder()
-            val gzipSource = GZIPInputStream(responseBody.byteStream()).source()
-            val strippedHeaders = response.headers.newBuilder()
-                .removeAll("Content-Encoding")
-                .removeAll("Content-Length")
-                .build()
-            responseBuilder.run {
-                headers(strippedHeaders)
-                val contentType = response.header("Content-Type")
-                body(RealResponseBody(contentType, -1L, gzipSource.buffer()))
-                build()
-            }
-        } else {
-            response
-        }
-    }
+    builder.addInterceptor(DecompressInterceptor)
     builder.build().apply {
         val okHttpName =
             OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
@@ -150,6 +117,26 @@ val okHttpClient: OkHttpClient by lazy {
                 uncaughtExceptionHandler = OkhttpUncaughtExceptionHandler
             }
         }
+    }
+}
+
+val okHttpClientManga by lazy {
+    okHttpClient.newBuilder().run {
+        val interceptors = interceptors()
+        interceptors.add(1) { chain ->
+            val request = chain.request()
+            val response = chain.proceed(request)
+            val url = request.url.toString()
+            response.newBuilder()
+                .body(ProgressResponseBody(url, LISTENER, response.body!!))
+                .build()
+        }
+        interceptors.add(1) { chain ->
+            ReadManga.rateLimiter.withLimitBlocking {
+                chain.proceed(chain.request())
+            }
+        }
+        build()
     }
 }
 

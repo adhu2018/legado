@@ -223,6 +223,28 @@
 -keep class com.sun.script.javascript.** { *; }
 -keep class org.mozilla.** { *; }
 -dontwarn org.mozilla.javascript.engine.RhinoScriptEngineFactory
+### 以下内容是更新rhino1.7.14.jar后IDE提示添加的
+-dontwarn java.beans.**
+-dontwarn javax.script.**
+### 以下内容是更新rhino1.8.0.jar后IDE提示添加的
+-dontwarn jdk.dynalink.CallSiteDescriptor
+-dontwarn jdk.dynalink.DynamicLinker
+-dontwarn jdk.dynalink.DynamicLinkerFactory
+-dontwarn jdk.dynalink.NamedOperation
+-dontwarn jdk.dynalink.Namespace
+-dontwarn jdk.dynalink.NamespaceOperation
+-dontwarn jdk.dynalink.Operation
+-dontwarn jdk.dynalink.RelinkableCallSite
+-dontwarn jdk.dynalink.StandardNamespace
+-dontwarn jdk.dynalink.StandardOperation
+-dontwarn jdk.dynalink.linker.GuardedInvocation
+-dontwarn jdk.dynalink.linker.GuardingDynamicLinker
+-dontwarn jdk.dynalink.linker.LinkRequest
+-dontwarn jdk.dynalink.linker.LinkerServices
+-dontwarn jdk.dynalink.linker.TypeBasedGuardingDynamicLinker
+-dontwarn jdk.dynalink.linker.support.CompositeTypeBasedGuardingDynamicLinker
+-dontwarn jdk.dynalink.linker.support.Guards
+-dontwarn jdk.dynalink.support.ChainedCallSite
 
 ## EPUB
 -dontwarn nl.siegmann.epublib.**
@@ -264,10 +286,9 @@
 # Class.forName调用
 -keep class io.legado.app.lib.cronet.CronetInterceptor{*;}
 -keep class io.legado.app.lib.cronet.CronetLoader{*;}
--keep class io.legado.app.help.AppUpdateGitHub{*;}
+-keep class io.legado.app.help.update.AppUpdateGitHub{*;}
 -keep class io.legado.app.help.AppIntentType{*;}
 # Error Exception 
 -keep class * extends java.lang.Exception
 -keep class * extends java.lang.Error
 -keep class **Exception
-

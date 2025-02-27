@@ -10,6 +10,7 @@ import io.legado.app.constant.AppLog
 import io.legado.app.data.appDb
 import io.legado.app.data.entities.SearchBook
 import io.legado.app.data.entities.SearchKeyword
+import io.legado.app.help.book.isNotShelf
 import io.legado.app.help.config.AppConfig
 import io.legado.app.model.webBook.SearchModel
 import io.legado.app.utils.ConflateLiveData
@@ -29,6 +30,7 @@ class SearchViewModel(application: Application) : BaseViewModel(application) {
     var searchFinishLiveData = MutableLiveData<Boolean>()
     var isSearchLiveData = MutableLiveData<Boolean>()
     var searchKey: String = ""
+    var hasMore = true
     private var searchID = 0L
     private val searchModel = SearchModel(viewModelScope, object : SearchModel.CallBack {
 
@@ -44,7 +46,8 @@ class SearchViewModel(application: Application) : BaseViewModel(application) {
             searchBookLiveData.postValue(searchBooks)
         }
 
-        override fun onSearchFinish(isEmpty: Boolean) {
+        override fun onSearchFinish(isEmpty: Boolean, hasMore: Boolean) {
+            this@SearchViewModel.hasMore = hasMore
             isSearchLiveData.postValue(false)
             searchFinishLiveData.postValue(isEmpty)
         }
@@ -62,10 +65,11 @@ class SearchViewModel(application: Application) : BaseViewModel(application) {
         execute {
             appDb.bookDao.flowAll().mapLatest { books ->
                 val keys = arrayListOf<String>()
-                books.forEach {
-                    keys.add("${it.name}-${it.author}")
-                    keys.add(it.name)
-                }
+                books.filterNot { it.isNotShelf }
+                    .forEach {
+                        keys.add("${it.name}-${it.author}")
+                        keys.add(it.name)
+                    }
                 keys
             }.catch {
                 AppLog.put("搜索界面获取书籍列表失败\n${it.localizedMessage}", it)
@@ -97,6 +101,7 @@ class SearchViewModel(application: Application) : BaseViewModel(application) {
                 searchID = System.currentTimeMillis()
                 searchBookLiveData.postValue(emptyList())
                 searchKey = key
+                hasMore = true
             }
             if (searchKey.isEmpty()) {
                 return@execute

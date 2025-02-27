@@ -66,7 +66,7 @@ object NetworkUtils {
         for (i in '0'.code..'9'.code) {
             bitSet.set(i)
         }
-        for (char in "+-_.$:()!*@&#,[]") {
+        for (char in "+-_.~$:()!*@&#,[]") {
             bitSet.set(char.code)
         }
         return@lazy bitSet
@@ -178,6 +178,19 @@ object NetworkUtils {
         }.getOrDefault(baseUrl)
     }
 
+    fun getSubDomainOrNull(url: String): String? {
+        val baseUrl = getBaseUrl(url) ?: return null
+        return kotlin.runCatching {
+            val mURL = URL(baseUrl)
+            val host: String = mURL.host
+            //mURL.scheme https/http
+            //判断是否为ip
+            if (isIPAddress(host)) return host
+            //PublicSuffixDatabase处理域名
+            PublicSuffixDatabase.get().getEffectiveTldPlusOne(host) ?: host
+        }.getOrDefault(null)
+    }
+
     fun getDomain(url: String): String {
         val baseUrl = getBaseUrl(url) ?: return url
         return kotlin.runCatching {
@@ -194,10 +207,10 @@ object NetworkUtils {
             enumeration = NetworkInterface.getNetworkInterfaces()
         } catch (e: SocketException) {
             e.printOnDebug()
-            return mutableListOf()
+            return emptyList()
         }
 
-        var fallbackAddress: MutableList<InetAddress> = mutableListOf()
+        val addressList = mutableListOf<InetAddress>()
 
         while (enumeration.hasMoreElements()) {
             val nif = enumeration.nextElement()
@@ -205,13 +218,11 @@ object NetworkUtils {
             while (addresses.hasMoreElements()) {
                 val address = addresses.nextElement()
                 if (!address.isLoopbackAddress && isIPv4Address(address.hostAddress)) {
-                    if (nif.name?.startsWith("wlan") == true) {
-                        fallbackAddress.add(address)
-                    }
+                    addressList.add(address)
                 }
             }
         }
-        return fallbackAddress
+        return addressList
     }
 
     /**
@@ -221,14 +232,17 @@ object NetworkUtils {
      * @return True if the input parameter is a valid IPv4 address.
      */
     fun isIPv4Address(input: String?): Boolean {
-        return input != null && Validator.isIpv4(input)
+        return input != null && input.isNotEmpty()
+                && input[0] in '1'..'9'
+                && input.count { it == '.' } == 3
+                && Validator.isIpv4(input)
     }
 
     /**
      * Check if valid IPV6 address.
      */
     fun isIPv6Address(input: String?): Boolean {
-        return input != null && Validator.isIpv6(input)
+        return input != null && input.contains(":") && Validator.isIpv6(input)
     }
 
     /**

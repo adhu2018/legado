@@ -4,9 +4,12 @@ import io.legado.app.constant.AppLog
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookChapter
 import io.legado.app.data.entities.BookSource
+import io.legado.app.data.entities.BookSourcePart
 import io.legado.app.data.entities.SearchBook
 import io.legado.app.exception.NoStackTraceException
+import io.legado.app.help.book.addType
 import io.legado.app.help.book.getBookType
+import io.legado.app.help.book.removeAllBookType
 import io.legado.app.help.coroutine.Coroutine
 import io.legado.app.help.http.StrResponse
 import io.legado.app.model.Debug
@@ -17,6 +20,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
@@ -58,6 +63,7 @@ object WebBook {
             headerMapF = bookSource.getHeaderMap(true),
             source = bookSource,
             ruleData = ruleData,
+            coroutineContext = coroutineContext
         )
         var res = analyzeUrl.getStrResponseAwait()
         //检测书源是否已登录
@@ -73,7 +79,8 @@ object WebBook {
             analyzeUrl = analyzeUrl,
             baseUrl = res.url,
             body = res.body,
-            isSearch = true
+            isSearch = true,
+            isRedirect = res.raw.priorResponse?.isRedirect == true
         )
     }
 
@@ -104,7 +111,8 @@ object WebBook {
             baseUrl = bookSource.bookSourceUrl,
             source = bookSource,
             ruleData = ruleData,
-            headerMapF = bookSource.getHeaderMap(true)
+            headerMapF = bookSource.getHeaderMap(true),
+            coroutineContext = coroutineContext
         )
         var res = analyzeUrl.getStrResponseAwait()
         //检测书源是否已登录
@@ -144,7 +152,8 @@ object WebBook {
         book: Book,
         canReName: Boolean = true,
     ): Book {
-        book.type = bookSource.getBookType()
+        book.removeAllBookType()
+        book.addType(bookSource.getBookType())
         if (!book.infoHtml.isNullOrEmpty()) {
             BookInfo.analyzeBookInfo(
                 bookSource = bookSource,
@@ -160,7 +169,8 @@ object WebBook {
                 baseUrl = bookSource.bookSourceUrl,
                 source = bookSource,
                 ruleData = book,
-                headerMapF = bookSource.getHeaderMap(true)
+                headerMapF = bookSource.getHeaderMap(true),
+                coroutineContext = coroutineContext
             )
             var res = analyzeUrl.getStrResponseAwait()
             //检测书源是否已登录
@@ -220,7 +230,8 @@ object WebBook {
         book: Book,
         runPerJs: Boolean = false
     ): Result<List<BookChapter>> {
-        book.type = bookSource.getBookType()
+        book.removeAllBookType()
+        book.addType(bookSource.getBookType())
         return kotlin.runCatching {
             if (runPerJs) {
                 runPreUpdateJs(bookSource, book).getOrThrow()
@@ -239,7 +250,8 @@ object WebBook {
                     baseUrl = book.bookUrl,
                     source = bookSource,
                     ruleData = book,
-                    headerMapF = bookSource.getHeaderMap(true)
+                    headerMapF = bookSource.getHeaderMap(true),
+                    coroutineContext = coroutineContext
                 )
                 var res = analyzeUrl.getStrResponseAwait()
                 //检测书源是否已登录
@@ -273,9 +285,14 @@ object WebBook {
         context: CoroutineContext = Dispatchers.IO,
         start: CoroutineStart = CoroutineStart.DEFAULT,
         executeContext: CoroutineContext = Dispatchers.Main,
+        semaphore: Semaphore? = null,
     ): Coroutine<String> {
         return Coroutine.async(scope, context, start = start, executeContext = executeContext) {
-            getContentAwait(bookSource, book, bookChapter, nextChapterUrl, needSave)
+            semaphore?.withPermit {
+                getContentAwait(bookSource, book, bookChapter, nextChapterUrl, needSave)
+            } ?: run {
+                getContentAwait(bookSource, book, bookChapter, nextChapterUrl, needSave)
+            }
         }
     }
 
@@ -312,7 +329,8 @@ object WebBook {
                 source = bookSource,
                 ruleData = book,
                 chapter = bookChapter,
-                headerMapF = bookSource.getHeaderMap(true)
+                headerMapF = bookSource.getHeaderMap(true),
+                coroutineContext = coroutineContext
             )
             var res = analyzeUrl.getStrResponseAwait(
                 jsStr = bookSource.getContentRule().webJs,
@@ -343,13 +361,14 @@ object WebBook {
      */
     fun preciseSearch(
         scope: CoroutineScope,
-        bookSources: List<BookSource>,
+        bookSourceParts: List<BookSourcePart>,
         name: String,
         author: String,
         context: CoroutineContext = Dispatchers.IO,
     ): Coroutine<Pair<Book, BookSource>> {
         return Coroutine.async(scope, context) {
-            for (source in bookSources) {
+            for (s in bookSourceParts) {
+                val source = s.getBookSource() ?: continue
                 val book = preciseSearchAwait(scope, source, name, author).getOrNull()
                 if (book != null) {
                     return@async Pair(book, source)

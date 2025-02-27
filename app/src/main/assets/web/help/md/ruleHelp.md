@@ -40,22 +40,29 @@
 规则填写示范
 [
     {
-        name: "telephone",
-        type: "text"
+        "name": "telephone",
+        "type": "text"
     },
     {
-        name: "password",
-        type: "password"
+        "name": "password",
+        "type": "password"
     },
     {
-        name: "注册",
-        type: "button",
-        action: "http://www.yooike.com/xiaoshuo/#/register?title=%E6%B3%A8%E5%86%8C"
+        "name": "注册",
+        "type": "button",
+        "action": "http://www.yooike.com/xiaoshuo/#/register?title=%E6%B3%A8%E5%86%8C"
     },
     {
-        name: "获取验证码",
-        type: "button",
-        action: "getVerificationCode()"
+        "name": "获取验证码",
+        "type": "button",
+        "action": "getVerificationCode()",
+        "style": {
+            "layout_flexGrow": 0,
+            "layout_flexShrink": 1,
+            "layout_alignSelf": "auto",
+            "layout_flexBasisPercent": -1,
+            "layout_wrapBefore": false
+        }
     }
 ]
 ```
@@ -110,6 +117,9 @@ getResponse(): Response //返回访问结果,网络朗读引擎采用的是这�
 ```
 
 * 请求头,支持http代理,socks4 socks5代理设置
+> 注意请求头的key是区分大小写的  
+> 正确格式 User-Agent Referer  
+> 错误格式 user-agent referer
 ```
 socks5代理
 {
@@ -119,9 +129,9 @@ http代理
 {
   "proxy":"http://127.0.0.1:1080"
 }
-支持代理服务器验证
+支持http代理服务器验证
 {
-  "proxy":"socks5://127.0.0.1:1080@用户名@密码"
+  "proxy":"http://127.0.0.1:1080@用户名@密码"
 }
 注意:这些请求头是无意义的,会被忽略掉
 ```
@@ -143,9 +153,9 @@ https://www.baidu.com,{"js":"java.url=java.url+'yyyy'"}
     "method":"POST",
     "body":"show=title&tempid=1&keyboard="+key
     });
-    return java.put('surl',String(java.connect(url).raw().request().url()));
+    return source.put('surl',String(java.connect(url).raw().request().url()));
   } else {
-    return java.get('surl')+'&page='+(page-1)
+    return source.get('surl')+'&page='+(page-1)
   }
 })()
 或者
@@ -154,9 +164,9 @@ https://www.baidu.com,{"js":"java.url=java.url+'yyyy'"}
   if(page==1){
     let url=base+'index.php';
     let body='show=title&tempid=1&keyboard='+key;
-    return base+java.put('surl',java.post(url,body,{}).header("Location"));
+    return base+source.put('surl',java.post(url,body,{}).header("Location"));
   } else {
-    return base+java.get('surl')+'&page='+(page-1);
+    return base+source.get('surl')+'&page='+(page-1);
   }
 })()
 ```

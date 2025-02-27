@@ -1,13 +1,11 @@
 package io.legado.app.ui.replace
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.SubMenu
-import android.widget.EditText
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.widget.PopupMenu
@@ -45,6 +43,7 @@ import io.legado.app.utils.launch
 import io.legado.app.utils.readText
 import io.legado.app.utils.sendToClip
 import io.legado.app.utils.setEdgeEffectColor
+import io.legado.app.utils.shouldHideSoftInput
 import io.legado.app.utils.showDialogFragment
 import io.legado.app.utils.showHelp
 import io.legado.app.utils.splitNotBlank
@@ -122,14 +121,16 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
         initRecyclerView()
         initSearchView()
         initSelectActionView()
-        observeReplaceRuleData()
         observeGroupData()
+        viewModel.initData(intent) {
+            observeReplaceRuleData()
+        }
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
         if (ev.action == MotionEvent.ACTION_DOWN) {
             currentFocus?.let {
-                if (it is EditText) {
+                if (it.shouldHideSoftInput(ev)) {
                     it.clearFocus()
                     it.hideSoftInput()
                 }
@@ -168,9 +169,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
 
     private fun initSearchView() {
         searchView.applyTint(primaryTextColor)
-        searchView.onActionViewExpanded()
         searchView.queryHint = getString(R.string.replace_purify_search)
-        searchView.clearFocus()
         searchView.setOnQueryTextListener(this)
     }
 
@@ -217,6 +216,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
                     val key = searchKey.substringAfter("group:")
                     appDb.replaceRuleDao.flowGroupSearch("%$key%")
                 }
+
                 else -> {
                     appDb.replaceRuleDao.flowSearch("%$searchKey%")
                 }
@@ -224,7 +224,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
                 AppLog.put("替换规则管理界面更新数据出错", it)
             }.flowOn(IO).conflate().collect {
                 if (dataInit) {
-                    setResult(Activity.RESULT_OK)
+                    setResult(RESULT_OK)
                 }
                 adapter.setItems(it, adapter.diffItemCallBack)
                 dataInit = true
@@ -247,6 +247,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
         when (item.itemId) {
             R.id.menu_add_replace_rule ->
                 editActivity.launch(ReplaceEditActivity.startIntent(this))
+
             R.id.menu_group_manage -> showDialogFragment<GroupManageDialog>()
             R.id.menu_del_selection -> viewModel.delSelection(adapter.selection)
             R.id.menu_import_onLine -> showImportDialog()
@@ -254,11 +255,13 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
                 mode = HandleFileContract.FILE
                 allowExtensions = arrayOf("txt", "json")
             }
+
             R.id.menu_import_qr -> qrCodeResult.launch()
             R.id.menu_help -> showHelp("replaceRuleHelp")
             R.id.menu_group_null -> {
                 searchView.setQuery(getString(R.string.no_group), true)
             }
+
             else -> if (item.groupId == R.id.replace_group) {
                 searchView.setQuery("group:${item.title}", true)
             }
@@ -311,7 +314,7 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
             okButton {
                 val text = alertBinding.editView.text?.toString()
                 text?.let {
-                    if (!cacheUrls.contains(it)) {
+                    if (it.isAbsUrl() && !cacheUrls.contains(it)) {
                         cacheUrls.add(0, it)
                         aCache.put(importRecordKey, cacheUrls.joinToString(","))
                     }
@@ -343,6 +346,14 @@ class ReplaceRuleActivity : VMBaseActivity<ActivityReplaceRuleBinding, ReplaceRu
             adapter.selection.size,
             adapter.itemCount
         )
+    }
+
+    override fun isEnabledForBook(rule: ReplaceRule): Boolean {
+        return viewModel.isEnabledForBook(rule)
+    }
+
+    override fun isAppliedForBook(rule: ReplaceRule): Boolean {
+        return viewModel.isAppliedForBook(rule)
     }
 
     override fun update(vararg rule: ReplaceRule) {

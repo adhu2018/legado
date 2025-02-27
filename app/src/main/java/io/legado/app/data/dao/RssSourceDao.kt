@@ -38,6 +38,7 @@ interface RssSourceDao {
         where sourceName like '%' || :key || '%' 
         or sourceUrl like '%' || :key || '%' 
         or sourceGroup like '%' || :key || '%'
+        or sourceComment like '%' || :key || '%'
         order by customOrder"""
     )
     fun flowSearch(key: String): Flow<List<RssSource>>
@@ -69,7 +70,8 @@ interface RssSourceDao {
         where enabled = 1 
         and (sourceName like '%' || :searchKey || '%' 
             or sourceGroup like '%' || :searchKey || '%' 
-            or sourceUrl like '%' || :searchKey || '%') 
+            or sourceUrl like '%' || :searchKey || '%'
+            or sourceComment like '%' || :searchKey || '%') 
         order by customOrder"""
     )
     fun flowEnabled(searchKey: String): Flow<List<RssSource>>
@@ -88,7 +90,7 @@ interface RssSourceDao {
     fun flowGroupsUnProcessed(): Flow<List<String>>
 
     @Query("select distinct sourceGroup from rssSources where trim(sourceGroup) <> '' and enabled = 1")
-    fun flowGroupEnabled(): Flow<List<String>>
+    fun flowEnabledGroupsUnProcessed(): Flow<List<String>>
 
     @get:Query("select distinct sourceGroup from rssSources where trim(sourceGroup) <> ''")
     val allGroupsUnProcessed: List<String>
@@ -142,4 +144,11 @@ interface RssSourceDao {
             dealGroups(list)
         }.flowOn(IO)
     }
+
+    fun flowEnabledGroups(): Flow<List<String>> {
+        return flowEnabledGroupsUnProcessed().map { list ->
+            dealGroups(list)
+        }.flowOn(IO)
+    }
+
 }
