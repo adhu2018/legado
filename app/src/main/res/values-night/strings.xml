@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="filter_desc">不再推荐特定书籍</string>
+    <string name="filter">过滤器</string>
+</resources>

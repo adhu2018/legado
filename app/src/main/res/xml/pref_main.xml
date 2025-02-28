@@ -19,6 +19,13 @@
         app:iconSpaceReserved="false" />
 
     <io.legado.app.lib.prefs.Preference
+        android:icon="@drawable/baseline_filter_alt_24"
+        android:key="filterManage"
+        android:summary="@string/filter_desc"
+        android:title="@string/filter"
+        app:iconSpaceReserved="false" />
+
+    <io.legado.app.lib.prefs.Preference
         android:icon="@drawable/ic_cfg_replace"
         android:key="replaceManage"
         android:summary="@string/replace_purify_desc"

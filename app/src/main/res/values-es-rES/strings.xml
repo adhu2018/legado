@@ -1205,4 +1205,6 @@
     <string name="manga_header_footer">页脚</string>
     <string name="manga_radio_left">靠左</string>
     <string name="manga_radio_center">居中</string>
+    <string name="filter_desc">不再推荐特定书籍</string>
+    <string name="filter">过滤器</string>
 </resources>
