@@ -1,20 +1,17 @@
 package io.legado.app.data.entities
 
 import android.os.Parcelable
-import android.text.TextUtils
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import io.legado.app.R
-import io.legado.app.constant.AppLog
 import io.legado.app.exception.NoStackTraceException
+import io.legado.app.utils.isValid
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import splitties.init.appCtx
-import java.util.regex.Pattern
-import java.util.regex.PatternSyntaxException
 
 @Parcelize
 @Entity(
@@ -85,29 +82,9 @@ data class ReplaceRule(
         }
     }
 
-    fun isValid(): Boolean {
-        if (TextUtils.isEmpty(pattern)) {
-            return false
-        }
-        //判断正则表达式是否正确
-        if (isRegex) {
-            try {
-                Pattern.compile(pattern)
-            } catch (ex: PatternSyntaxException) {
-                AppLog.put("正则语法错误或不支持：${ex.localizedMessage}", ex)
-                return false
-            }
-            // Pattern.compile测试通过，但是部分情况下会替换超时，报错，一般发生在修改表达式时漏删了
-            if (pattern.endsWith('|') && !pattern.endsWith("\\|")) {
-                return false
-            }
-        }
-        return true
-    }
-
     @Throws(NoStackTraceException::class)
     fun checkValid() {
-        if (!isValid()) {
+        if (!pattern.isValid(isRegex)) {
             throw NoStackTraceException(appCtx.getString(R.string.replace_rule_invalid))
         }
     }

@@ -1,8 +1,10 @@
 package io.legado.app.utils
 
+import android.text.TextUtils
 import androidx.core.os.postDelayed
 import com.script.ScriptBindings
 import com.script.rhino.RhinoScriptEngine
+import io.legado.app.constant.AppLog
 import io.legado.app.exception.RegexTimeoutException
 import io.legado.app.help.CrashHandler
 import io.legado.app.help.coroutine.Coroutine
@@ -11,6 +13,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import splitties.init.appCtx
 import java.util.regex.Matcher
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -68,3 +72,24 @@ fun CharSequence.replace(regex: Regex, replacement: String, timeout: Long): Stri
     }
 }
 
+
+
+fun String.isValid(isRegex: Boolean): Boolean {
+    if (TextUtils.isEmpty(this)) {
+        return false
+    }
+
+    if (isRegex) {
+        try {
+            Pattern.compile(this)
+        } catch (ex: PatternSyntaxException) {
+            AppLog.put("正则语法错误或不支持：${ex.localizedMessage}", ex)
+            return false
+        }
+
+        if (this.endsWith('|') && !this.endsWith("\\|")) {
+            return false
+        }
+    }
+    return true
+}
