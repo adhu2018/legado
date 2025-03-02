@@ -371,4 +371,17 @@ object DatabaseMigrations {
     )
     class Migration_64_65 : AutoMigrationSpec
 
+    @Suppress("ClassName")
+    class Migration_75_76 : AutoMigrationSpec {
+        override fun onPostMigrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                    CREATE TABLE IF NOT EXISTS `filter_rules` (`id` INTEGER NOT NULL,
+                    `name` TEXT NOT NULL, `pattern` TEXT NOT NULL, `isEnabled` INTEGER, 
+                    `isRegex` INTEGER, `timeoutMillisecond` INTEGER, `sortOrder` INTEGER, PRIMARY KEY(`id`))
+                """
+            )
+        }
+    }
+
 }

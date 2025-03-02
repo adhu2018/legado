@@ -1210,4 +1210,7 @@
     <string name="manga_radio_center">居中</string>
     <string name="filter_desc">不再推荐特定书籍</string>
     <string name="filter">过滤器</string>
+    <string name="filter_rule_edit">过滤器规则编辑</string>
+    <string name="add_filter_rule">添加过滤器规则</string>
+    <string name="filter_search">过滤器-搜索</string>
 </resources>

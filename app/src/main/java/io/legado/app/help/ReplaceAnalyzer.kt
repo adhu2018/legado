@@ -13,7 +13,7 @@ object ReplaceAnalyzer {
             for (item in items) {
                 val jsonItem = jsonPath.parse(item)
                 jsonToReplaceRule(jsonItem.jsonString()).getOrThrow().let {
-                    if (it.isValid()) {
+                    if (it.pattern.isValid(it.isRegex)) {
                         replaceRules.add(it)
                     }
                 }
