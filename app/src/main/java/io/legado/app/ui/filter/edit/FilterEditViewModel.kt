@@ -15,17 +15,17 @@ class FilterEditViewModel(application: Application) : BaseViewModel(application)
 
     var filterRule: FilterRule? = null
 
-    fun initData(intent: Intent, finally: (replaceRule: FilterRule) -> Unit) {
+    fun initData(intent: Intent, finally: (filterRule: FilterRule) -> Unit) {
         execute {
             val id = intent.getLongExtra("id", -1)
             filterRule = if (id > 0) {
                 appDb.filterRuleDao.findById(id)
             } else {
+                val name = intent.getStringExtra("name") ?: ""
                 val pattern = intent.getStringExtra("pattern") ?: ""
                 val isRegex = intent.getBooleanExtra("isRegex", false)
-                val scope = intent.getStringExtra("scope")
                 FilterRule(
-                    name = pattern,
+                    name = name,
                     pattern = pattern,
                     isRegex = isRegex
                 )

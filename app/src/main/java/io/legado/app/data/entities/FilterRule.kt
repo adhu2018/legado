@@ -63,7 +63,7 @@ data class FilterRule(
     @Throws(NoStackTraceException::class)
     fun checkValid() {
         if (!pattern.isValid(isRegex)) {
-            throw NoStackTraceException(appCtx.getString(R.string.replace_rule_invalid))
+            throw NoStackTraceException(appCtx.getString(R.string.rule_invalid))
         }
     }
 
