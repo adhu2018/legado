@@ -56,6 +56,9 @@ class FilterEditActivity :
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         softKeyboardTool.attachToWindow(window)
         initView()
+        viewModel.initData(intent) {
+            upFilterView(it)
+        }
     }
 
     override fun onCompatCreateOptionsMenu(menu: Menu): Boolean {
