@@ -36,4 +36,7 @@ interface FilterRuleDao {
     @Query("SELECT * FROM filter_rules where name like :key ORDER BY sortOrder ASC")
     fun flowSearch(key: String): Flow<List<FilterRule>>
 
+    @Query("SELECT * FROM filter_rules WHERE id = :id")
+    fun findById(id: Long): FilterRule?
+
 }

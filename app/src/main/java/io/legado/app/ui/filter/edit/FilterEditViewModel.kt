@@ -1,6 +1,7 @@
 package io.legado.app.ui.filter.edit
 
 import android.app.Application
+import android.content.Intent
 import io.legado.app.base.BaseViewModel
 import io.legado.app.constant.AppLog
 import io.legado.app.data.appDb
@@ -13,6 +14,28 @@ import io.legado.app.utils.toastOnUi
 class FilterEditViewModel(application: Application) : BaseViewModel(application) {
 
     var filterRule: FilterRule? = null
+
+    fun initData(intent: Intent, finally: (replaceRule: FilterRule) -> Unit) {
+        execute {
+            val id = intent.getLongExtra("id", -1)
+            filterRule = if (id > 0) {
+                appDb.filterRuleDao.findById(id)
+            } else {
+                val pattern = intent.getStringExtra("pattern") ?: ""
+                val isRegex = intent.getBooleanExtra("isRegex", false)
+                val scope = intent.getStringExtra("scope")
+                FilterRule(
+                    name = pattern,
+                    pattern = pattern,
+                    isRegex = isRegex
+                )
+            }
+        }.onFinally {
+            filterRule?.let {
+                finally(it)
+            }
+        }
+    }
 
 
     fun update(vararg filterRule: FilterRule) {
