@@ -7,15 +7,15 @@ import io.legado.app.data.appDb
  */
 @Suppress("unused")
 object FilterUtils {
-    private val filterRules = appDb.filterRuleDao.all
+    private val filterRules = appDb.filterRuleDao.enabled
 
     fun test(name: String): Boolean {
         filterRules.forEach { item ->
             if (item.pattern.isNotEmpty()) {
-                if (item.isRegex) {
-                    item.regex.matchEntire(name) ?: return true
+                return if (item.isRegex) {
+                    item.regex.matches(name)
                 } else {
-                    return item.pattern == name
+                    item.pattern == name
                 }
             }
         }
