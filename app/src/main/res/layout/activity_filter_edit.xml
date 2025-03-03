@@ -30,7 +30,7 @@
                 android:id="@+id/til_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/replace_rule_summary">
+                android:hint="@string/filter_rule_summary">
 
                 <io.legado.app.lib.theme.view.ThemeEditText
                     android:id="@+id/et_name"
@@ -56,7 +56,7 @@
                 android:id="@+id/til_filter_rule"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/replace_rule">
+                android:hint="@string/filter_rule">
 
                 <io.legado.app.lib.theme.view.ThemeEditText
                     android:id="@+id/et_filter_rule"
