@@ -8,17 +8,17 @@ import io.legado.app.data.appDb
  */
 @Suppress("unused")
 object FilterUtils {
-    private val filterRules = appDb.filterRuleDao.enabled
 
     fun test(name: String): Boolean {
+        val filterRules = appDb.filterRuleDao.enabled
         filterRules.forEach { item ->
             if (item.pattern.isNotEmpty()) {
-                return if (item.isRegex) {
+                if (item.isRegex) {
                     AppLog.put("filter by regex. \nregex: `${item.pattern}` \nname: $name \nresult: ${name.contains(item.regex)}")
-                    name.contains(item.regex)
+                    if (name.contains(item.regex)) return true
                 } else {
                     AppLog.put("filter by string. \nstring: `${item.pattern}` \nname: $name \nresult: ${name.contains(item.pattern, ignoreCase = true)}")
-                    name.contains(item.pattern, ignoreCase = true)
+                    if (name.contains(item.pattern, ignoreCase = true)) return true
                 }
             }
         }

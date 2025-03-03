@@ -38,7 +38,7 @@ class ExploreShowViewModel(application: Application) : BaseViewModel(application
             appDb.bookDao.flowAll().mapLatest { books ->
                 val keys = arrayListOf<String>()
                 books.filterNot { it.isNotShelf }
-                    .filter { FilterUtils.test(it.name) }
+                    //.filterNot { FilterUtils.test(it.name) }
                     .forEach {
                         keys.add("${it.name}-${it.author}")
                         keys.add(it.name)
@@ -74,7 +74,8 @@ class ExploreShowViewModel(application: Application) : BaseViewModel(application
         WebBook.exploreBook(viewModelScope, source, url, page)
             .timeout(if (BuildConfig.DEBUG) 0L else 30000L)
             .onSuccess(IO) { searchBooks ->
-                books.addAll(searchBooks)
+                var tBooks = filter(searchBooks)
+                books.addAll(tBooks)
                 booksData.postValue(books.toList())
                 appDb.searchBookDao.insert(*searchBooks.toTypedArray())
                 page++
@@ -82,6 +83,10 @@ class ExploreShowViewModel(application: Application) : BaseViewModel(application
                 it.printOnDebug()
                 errorLiveData.postValue(it.stackTraceStr)
             }
+    }
+
+    private fun filter(searchBooks: List<SearchBook>): List<SearchBook> {
+        return searchBooks.filterNot { FilterUtils.test(it.name) }
     }
 
     fun isInBookShelf(name: String, author: String): Boolean {

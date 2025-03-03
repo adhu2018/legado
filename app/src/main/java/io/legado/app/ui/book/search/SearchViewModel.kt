@@ -67,7 +67,7 @@ class SearchViewModel(application: Application) : BaseViewModel(application) {
             appDb.bookDao.flowAll().mapLatest { books ->
                 val keys = arrayListOf<String>()
                 books.filterNot { it.isNotShelf }
-                    .filter { FilterUtils.test(it.name) }
+                    //.filterNot { FilterUtils.test(it.name) }
                     .forEach {
                         keys.add("${it.name}-${it.author}")
                         keys.add(it.name)

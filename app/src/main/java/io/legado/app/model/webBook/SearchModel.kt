@@ -9,6 +9,7 @@ import io.legado.app.data.entities.SearchBook
 import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.config.AppConfig
 import io.legado.app.ui.book.search.SearchScope
+import io.legado.app.utils.FilterUtils
 import io.legado.app.utils.getPrefBoolean
 import io.legado.app.utils.mapParallelSafe
 import kotlinx.coroutines.CoroutineScope
@@ -106,10 +107,11 @@ class SearchModel(private val scope: CoroutineScope, private val callBack: CallB
 
     private suspend fun mergeItems(newDataS: List<SearchBook>, precision: Boolean) {
         if (newDataS.isNotEmpty()) {
-            val copyData = ArrayList(searchBooks)
+            var copyData = ArrayList(searchBooks)
             val equalData = arrayListOf<SearchBook>()
             val containsData = arrayListOf<SearchBook>()
             val otherData = arrayListOf<SearchBook>()
+            copyData = filter(copyData)
             copyData.forEach {
                 coroutineContext.ensureActive()
                 if (it.name == searchKey || it.author == searchKey) {
@@ -169,6 +171,10 @@ class SearchModel(private val scope: CoroutineScope, private val callBack: CallB
             coroutineContext.ensureActive()
             searchBooks = equalData
         }
+    }
+
+    private fun filter(copyData: ArrayList<SearchBook>): ArrayList<SearchBook> {
+        return copyData.filterNot { FilterUtils.test(it.name) } as ArrayList<SearchBook>
     }
 
     fun cancelSearch() {
