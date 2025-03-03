@@ -12,6 +12,7 @@ import io.legado.app.data.entities.BookSource
 import io.legado.app.data.entities.SearchBook
 import io.legado.app.help.book.isNotShelf
 import io.legado.app.model.webBook.WebBook
+import io.legado.app.utils.FilterUtils
 import io.legado.app.utils.printOnDebug
 import io.legado.app.utils.stackTraceStr
 import kotlinx.coroutines.Dispatchers.IO
@@ -37,6 +38,7 @@ class ExploreShowViewModel(application: Application) : BaseViewModel(application
             appDb.bookDao.flowAll().mapLatest { books ->
                 val keys = arrayListOf<String>()
                 books.filterNot { it.isNotShelf }
+                    .filter { FilterUtils.test(it.name) }
                     .forEach {
                         keys.add("${it.name}-${it.author}")
                         keys.add(it.name)

@@ -14,6 +14,7 @@ import io.legado.app.help.book.isNotShelf
 import io.legado.app.help.config.AppConfig
 import io.legado.app.model.webBook.SearchModel
 import io.legado.app.utils.ConflateLiveData
+import io.legado.app.utils.FilterUtils
 import io.legado.app.utils.toastOnUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.catch
@@ -66,6 +67,7 @@ class SearchViewModel(application: Application) : BaseViewModel(application) {
             appDb.bookDao.flowAll().mapLatest { books ->
                 val keys = arrayListOf<String>()
                 books.filterNot { it.isNotShelf }
+                    .filter { FilterUtils.test(it.name) }
                     .forEach {
                         keys.add("${it.name}-${it.author}")
                         keys.add(it.name)
