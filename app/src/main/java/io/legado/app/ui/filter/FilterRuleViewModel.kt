@@ -63,4 +63,18 @@ class FilterRuleViewModel(application: Application) : BaseViewModel(application)
             appDb.filterRuleDao.delete(*rules.toTypedArray())
         }
     }
+
+    fun toTop(rule: FilterRule) {
+        execute {
+            rule.order = appDb.filterRuleDao.minOrder - 1
+            appDb.filterRuleDao.update(rule)
+        }
+    }
+
+    fun toBottom(rule: FilterRule) {
+        execute {
+            rule.order = appDb.filterRuleDao.maxOrder + 1
+            appDb.filterRuleDao.update(rule)
+        }
+    }
 }

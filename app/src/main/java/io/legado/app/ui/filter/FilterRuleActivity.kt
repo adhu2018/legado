@@ -258,11 +258,13 @@ class FilterRuleActivity : VMBaseActivity<ActivityFilterRuleBinding, FilterRuleV
     }
 
     override fun toTop(rule: FilterRule) {
-        TODO("Not yet implemented")
+        setResult(RESULT_OK)
+        viewModel.toTop(rule)
     }
 
     override fun toBottom(rule: FilterRule) {
-        TODO("Not yet implemented")
+        setResult(RESULT_OK)
+        viewModel.toBottom(rule)
     }
 
     override fun upOrder() {

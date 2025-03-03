@@ -39,4 +39,10 @@ interface FilterRuleDao {
     @Query("SELECT * FROM filter_rules WHERE id = :id")
     fun findById(id: Long): FilterRule?
 
+    @get:Query("SELECT MIN(sortOrder) FROM filter_rules")
+    val minOrder: Int
+
+    @get:Query("SELECT MAX(sortOrder) FROM filter_rules")
+    val maxOrder: Int
+
 }
