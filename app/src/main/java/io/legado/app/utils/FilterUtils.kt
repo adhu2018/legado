@@ -13,7 +13,7 @@ object FilterUtils {
         filterRules.forEach { item ->
             if (item.pattern.isNotEmpty()) {
                 return if (item.isRegex) {
-                    item.regex.matches(name)
+                    item.regex.containsMatchIn(name)
                 } else {
                     item.pattern == name
                 }
