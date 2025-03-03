@@ -224,6 +224,11 @@
             android:name=".ui.replace.ReplaceRuleActivity"
             android:launchMode="singleTop"
             android:screenOrientation="behind" />
+        <!-- 过滤器规则界面 -->
+        <activity
+            android:name=".ui.filter.FilterRuleActivity"
+            android:launchMode="singleTop"
+            android:screenOrientation="behind" />
         <!-- 书籍管理 -->
         <activity
             android:name=".ui.book.manage.BookshelfManageActivity"
