@@ -61,7 +61,6 @@ class FilterRuleActivity : VMBaseActivity<ActivityFilterRuleBinding, FilterRuleV
     private val searchView: SearchView by lazy {
         binding.titleBar.findViewById(R.id.search_view)
     }
-    private var groups = hashSetOf<String>()
     private var groupMenu: SubMenu? = null
     private var filterRuleFlowJob: Job? = null
     private var dataInit = false

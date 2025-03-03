@@ -98,6 +98,7 @@ class FilterRuleAdapter(context: Context, var callBack: CallBack) :
             if (payloads.isEmpty()) {
                 root.setBackgroundColor(ColorUtils.withAlpha(context.backgroundColor, 0.5f))
                 swtEnabled.isChecked = item.isEnabled
+                cbName.text = item.name
                 cbName.isChecked = selected.contains(item)
             } else {
                 for (i in payloads.indices) {
@@ -105,6 +106,7 @@ class FilterRuleAdapter(context: Context, var callBack: CallBack) :
                     bundle.keySet().map {
                         when (it) {
                             "selected" -> cbName.isChecked = selected.contains(item)
+                            "upName" -> cbName.text = item.name
                             "enabled" -> swtEnabled.isChecked = item.isEnabled
                         }
                     }
