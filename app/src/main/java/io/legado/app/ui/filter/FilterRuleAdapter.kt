@@ -13,8 +13,10 @@ import io.legado.app.base.adapter.ItemViewHolder
 import io.legado.app.base.adapter.RecyclerAdapter
 import io.legado.app.data.entities.FilterRule
 import io.legado.app.databinding.ItemFilterRuleBinding
+import io.legado.app.lib.theme.backgroundColor
 import io.legado.app.ui.widget.recycler.DragSelectTouchHelper
 import io.legado.app.ui.widget.recycler.ItemTouchCallback
+import io.legado.app.utils.ColorUtils
 
 
 class FilterRuleAdapter(context: Context, var callBack: CallBack) :
@@ -92,7 +94,23 @@ class FilterRuleAdapter(context: Context, var callBack: CallBack) :
         item: FilterRule,
         payloads: MutableList<Any>
     ) {
-        TODO("Not yet implemented")
+        binding.run {
+            if (payloads.isEmpty()) {
+                root.setBackgroundColor(ColorUtils.withAlpha(context.backgroundColor, 0.5f))
+                swtEnabled.isChecked = item.isEnabled
+                cbName.isChecked = selected.contains(item)
+            } else {
+                for (i in payloads.indices) {
+                    val bundle = payloads[i] as Bundle
+                    bundle.keySet().map {
+                        when (it) {
+                            "selected" -> cbName.isChecked = selected.contains(item)
+                            "enabled" -> swtEnabled.isChecked = item.isEnabled
+                        }
+                    }
+                }
+            }
+        }
     }
 
     override fun onCurrentListChanged() {
