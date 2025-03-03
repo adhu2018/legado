@@ -89,12 +89,13 @@ class SearchModel(private val scope: CoroutineScope, private val callBack: CallB
                     WebBook.searchBookAwait(it, searchKey, searchPage)
                 }
             }.onEach { items ->
-                for (book in items) {
+                val titems = filter(items)
+                for (book in titems) {
                     book.releaseHtmlData()
                 }
-                hasMore = hasMore || items.isNotEmpty()
-                appDb.searchBookDao.insert(*items.toTypedArray())
-                mergeItems(items, precision)
+                hasMore = hasMore || titems.isNotEmpty()
+                appDb.searchBookDao.insert(*titems.toTypedArray())
+                mergeItems(titems, precision)
                 currentCoroutineContext().ensureActive()
                 callBack.onSearchSuccess(searchBooks)
             }.onCompletion {
@@ -111,7 +112,7 @@ class SearchModel(private val scope: CoroutineScope, private val callBack: CallB
             val equalData = arrayListOf<SearchBook>()
             val containsData = arrayListOf<SearchBook>()
             val otherData = arrayListOf<SearchBook>()
-            copyData = filter(copyData)
+            //copyData = filter(copyData)
             copyData.forEach {
                 coroutineContext.ensureActive()
                 if (it.name == searchKey || it.author == searchKey) {
@@ -173,8 +174,8 @@ class SearchModel(private val scope: CoroutineScope, private val callBack: CallB
         }
     }
 
-    private fun filter(copyData: ArrayList<SearchBook>): ArrayList<SearchBook> {
-        return copyData.filterNot { FilterUtils.test(it.name) } as ArrayList<SearchBook>
+    private fun filter(lsearchBooks: ArrayList<SearchBook>): ArrayList<SearchBook> {
+        return lsearchBooks.filterNot { FilterUtils.test(it.name) } as ArrayList<SearchBook>
     }
 
     fun cancelSearch() {
